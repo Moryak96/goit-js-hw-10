@@ -39,16 +39,33 @@ const options = {
 flatpickr("#datetime-picker", options);
 
 startBtn.addEventListener("click", () => {
+    if (!userSelectedDate) {
+        iziToast.error({
+            title: 'Error',
+            message: 'Please choose a date before starting the timer',
+            position: 'topRight',
+        });
+        return;
+    }
+
+    clearInterval(intervalId);
     intervalId = setInterval(() => {
         const intervalTime = userSelectedDate - Date.now();
+        if (intervalTime <= 0) {
+            clearInterval(intervalId);
+            timerDays.textContent = "00";
+            timerHours.textContent = "00";
+            timerMinutes.textContent = "00";
+            timerSeconds.textContent = "00";
+            return;
+        }
+        
         const time = convertMs(intervalTime);
-
         timerDays.textContent = addLeadingZero(time.days);
         timerHours.textContent = addLeadingZero(time.hours);
         timerMinutes.textContent = addLeadingZero(time.minutes);
         timerSeconds.textContent = addLeadingZero(time.seconds);
 
-        if(intervalTime < 1000) clearInterval(intervalId);
     }, 1000);
 
     startBtn.disabled = true;
@@ -58,12 +75,8 @@ startBtn.addEventListener("click", () => {
 
 
 function addLeadingZero(value) {
-    if (value < 10) {
-        return value.toString().padStart(2, '0');
-    } else {
-        return value.toString();
-    }
-}
+    return value < 10 ? `0${value}` : value;
+  }
 
 function convertMs(ms) {
     // Number of milliseconds per unit of time
@@ -72,13 +85,10 @@ function convertMs(ms) {
     const hour = minute * 60;
     const day = hour * 24;
   
-    // Remaining days
+
     const days = Math.floor(ms / day);
-    // Remaining hours
     const hours = Math.floor((ms % day) / hour);
-    // Remaining minutes
     const minutes = Math.floor(((ms % day) % hour) / minute);
-    // Remaining seconds
     const seconds = Math.floor((((ms % day) % hour) % minute) / second);
   
     return { days, hours, minutes, seconds };
